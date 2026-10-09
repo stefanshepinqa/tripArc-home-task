@@ -10,5 +10,12 @@
     "file": "SauceLabs-Demo-App.ipa",
     "url": "https://github.com/saucelabs/my-demo-app-ios/releases/download/2.3.0/SauceLabs-Demo-App.ipa",
     "sha256": "806ffa52aec66cf7098eb4abe370490a25c899c5d7a6730e100b28244d227c84"
+  },
+  "iosSimulator": {
+    "version": "2.3.0",
+    "file": "SauceLabs-Demo-App.Simulator.zip",
+    "bundle": "My Demo App.app",
+    "url": "https://github.com/saucelabs/my-demo-app-ios/releases/download/2.3.0/SauceLabs-Demo-App.Simulator.zip",
+    "sha256": "576285b16a750115bd8a294e4c50c86a88bcf28ba3d167c09e4223e7c91e9f18"
   }
 }
