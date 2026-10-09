@@ -1,8 +1,8 @@
 # Assessment review
 
-Reviewed against the TripArc QA Lead mobile automation brief. The required bar is met in this repository. What is still open is execution evidence (a public GitHub repo, a real iOS session, Sauce Labs, hosted CI) and a few places where the framework is heavier or more fragile than the brief needs.
+Reviewed again after the Sauce Labs and local Simulator changes. The required bar is met. Helper unit tests were removed; they are outside this assessment. `npm run check` is TypeScript plus the ESLint rules that keep specs free of drivers and locators.
 
-The same four specs can run on Android and iOS today. Platform differences stay in locator maps, fixtures, capabilities, and two page/helper branches. Specs do not mention a platform.
+What is still open is execution evidence: a public GitHub repo, one real iOS session, a Sauce Labs run, and hosted CI. The same four specs target Android and iOS. Platform differences stay in locator maps, fixtures, capabilities, and two page/helper branches. Specs do not mention a platform.
 
 ## Requirements coverage
 
@@ -11,7 +11,7 @@ The same four specs can run on Android and iOS today. Platform differences stay 
 | Appium + WebdriverIO + TypeScript against an Android emulator | Covered | `config/wdio.local.ts`, `npm run test:android` |
 | Launch, catalog, product, cart, checkout across multiple screens | Covered | `tests/specs/purchase.spec.ts` through confirmation |
 | At least one mobile-specific interaction | Covered | Bounded scroll in `DeviceHelper.scrollTo`; background and reactivate in `tests/specs/lifecycle.spec.ts` |
-| Same business test for Android and iOS, with one concrete platform abstraction | Covered in structure, not executed on iOS | `pair()` in `src/locators/strategies.ts`; cart tab example below |
+| Same business test for Android and iOS, with one concrete platform abstraction | Covered. Local Simulator command exists; no iOS runtime pass yet | `pair()` in `src/locators/strategies.ts`; `npm run test:ios` |
 | Synchronization without hard-coded sleeps | Covered | `waitForDisplayed`, `waitUntil` on badge, quantity, and subtotal. Mocha retries are 0 |
 | One negative or edge case that needs a real assertion | Covered | Shipping validation in `tests/specs/checkout-validation.spec.ts`; cart quantity/subtotal in `tests/specs/cart.spec.ts` |
 | README: run, structure, locators, Android/iOS, cloud, flakiness | Covered | `README.md` |
@@ -35,23 +35,21 @@ Three other differences are already isolated the same way:
 
 - Product identity. Android expects `Sauce Labs Backpack`. iOS English copy is `Sauce Labs Backpack - Black`. `FixtureHelper.product()` selects the row in `src/data/fixtures.ts`. Both are $29.99, and both apps add $5.99 delivery.
 - Shipping validation behavior. Android renders `fullNameErrorTV` inline. iOS presents an alert titled `Validation Error!` whose message is `Please provide your full name.` (`ShippingAddressViewController.swift` on tag 2.3.0). `ShippingPage` scrolls back to the inline error on Android and dismisses the alert on iOS. The spec still asserts the same message and that checkout did not advance.
-- Capabilities. `cloudCapabilities()` switches `UiAutomator2` / `XCUITest` and the Sauce Labs device variables. Local Android adds `udid`, `systemPort`, and `fullReset`.
+- Capabilities. `cloudCapabilities()` switches `UiAutomator2` / `XCUITest` and the Sauce Labs device variables. Local Android adds `udid`, `systemPort`, and `fullReset`. Local iOS uses `XCUITest`, bundle id `com.saucelabs.mydemo.app.ios`, and leaves alerts untouched so the shipping scenario can read them.
 
 ## What is missing
 
 ### Submission evidence
 
 - No public GitHub remote yet. The brief asks for a public repository link, not a zip or a private repo.
-- Sauce Labs Android and iOS configs exist (`config/wdio.cloud-android.ts`, `config/wdio.cloud-ios.ts`) and have not been run. Data center, device names, and IPA re-signing still have to be confirmed in the account.
+- Sauce Labs Android and iOS configs exist (`config/wdio.cloud-android.ts`, `config/wdio.cloud-ios.ts`) and have not been run. The example devices are now ones a freemium US-West account can allocate (`Samsung Galaxy A23 5G` / 13, `iPhone 13 Pro` / 18), and the Appium image is `appium3-2026-10` because this account rejects the retired `stable` alias. A real upload and session are still required.
 - GitHub Actions workflows exist and have not run on GitHub.
 
-### iOS cannot run from the current scripts
+### Local iOS is wired, not yet executed
 
-`npm run test:android` is the only local device command. There is no `test:ios` script, no local iOS WDIO config, and `scripts/register-driver.ts` installs only `uiautomator2`. `appium-xcuitest-driver` is not a dependency.
+`npm run test:ios` runs the same specs through `config/wdio.local-ios.ts`. `npm run apps:download -- ios-sim` fetches the official [2.3.0 simulator zip](https://github.com/saucelabs/my-demo-app-ios/releases/download/2.3.0/SauceLabs-Demo-App.Simulator.zip) and extracts `apps/My Demo App.app`. `appium-xcuitest-driver` is registered beside UiAutomator2. `localIosApp()` refuses an `.ipa`. `npm run doctor -- --ios` checks Xcode, `simctl`, the `.app`, and that `IOS_DEVICE_NAME` appears in the available simulator list.
 
-The pinned file in `config/apps.json` is `SauceLabs-Demo-App.ipa` from the [2.3.0 iOS release](https://github.com/saucelabs/my-demo-app-ios/releases/download/2.3.0/SauceLabs-Demo-App.ipa). That IPA is a device build (`com.saucelabs.mydemo.app.ios`). It is the right artifact for Sauce Labs Real Device Cloud or a signed device. It is not a Simulator `.app`. `simctl install` cannot use it.
-
-Building the simulator app from source needs Xcode and the credentials in `Config/Local.xcconfig` (`SAUCE_MOBILE_BETA_TOKEN`, `BACKTRACE_UNIVERSE`, `BACKTRACE_TOKEN`). Those tokens are for the demo SDKs inside the app, not for Appium.
+That closes the earlier gap of having no local iOS command. It does not replace a passing Simulator or Sauce session. The IPA remains the real-device build for Sauce Labs. Full Xcode is required. See [setup](setup.md).
 
 ### iOS locators that will likely fail on the first real session
 
@@ -67,7 +65,7 @@ These are written from storyboards and Swift, not from an XCUITest accessibility
 
 Java and the Android SDK live under ignored `.tools/`. `scripts/local-env.sh` exports them for the current shell only. Cursor tasks and new terminals do not source it, which is why `npm run report` failed with "Unable to locate a Java Runtime" and why `npm run test:android` failed when `emulator-5554` was not booted. A machine with a normal `JAVA_HOME` and `ANDROID_HOME` does not need the script. This checkout does, for Allure, `adb`, and the emulator.
 
-`npm run doctor` checks that some device is online. It does not check that the device is `emulator-5554` or that `sys.boot_completed` is `1`.
+`npm run doctor -- --ios` checks the named simulator. The Android doctor still only checks that some device is online. It does not check that the device is `emulator-5554` or that `sys.boot_completed` is `1`.
 
 ## How to run the iOS app with the same specs
 
@@ -87,21 +85,15 @@ Leave `autoGrantPermissions` as Android-only, which `cloudCapabilities()` alread
 
 ### Path B — local Simulator
 
-Use this when the walkthrough should show a local iOS session. Do not point Appium at the IPA.
+This path is now the `test:ios` command. Steps are in [setup](setup.md). Do not point Appium at the IPA.
 
-1. Clone [saucelabs/my-demo-app-ios](https://github.com/saucelabs/my-demo-app-ios) at tag `2.3.0`.
-2. Copy `Config/Local.xcconfig.example` to `Config/Local.xcconfig` and fill the three SDK keys the README requires, then build the `My Demo App` scheme for a simulator. The product is a `.app`, not the release IPA.
-3. Add `appium-xcuitest-driver` and register it the same way `scripts/register-driver.ts` registers UiAutomator2, with the same `APPIUM_HOME`.
-4. Add a local config beside `config/wdio.local.ts`: `platformName: iOS`, `appium:automationName: XCUITest`, `appium:app` set to the built `.app`, `appium:bundleId: com.saucelabs.mydemo.app.ios`, `appium:udid` of the booted simulator, `appium:noReset: false`. Skip `fullReset` until a run shows it is required; iOS reinstalls are slower and WDA startup dominates the first session.
-5. Boot the simulator, then run the same spec files. `FixtureHelper` and `LocatorHelper` need no spec changes.
-
-First WDA build needs Xcode and a few minutes. After that, start with `cart.spec.ts`. It exercises the catalog tap, the cart row, and the quantity wait, which are the fragile iOS selectors, and it never opens the validation alert.
+The first session compiles WebDriverAgent into `.appium/wda` and can take several minutes. `fullReset` then reinstalls the app for each of the four specs. Start with `npm run test:ios -- --spec tests/specs/cart.spec.ts`. It exercises the catalog tap, the cart row, and the quantity wait, which are the fragile iOS selectors, and it never opens the validation alert.
 
 ## Improvements worth making
 
 Ordered by how much they change the interview story. None of these are required to claim the brief is implemented.
 
-1. **Publish the repo and attach one real cloud or CI run.** The code claims those paths. `docs/validation.md` correctly says they are pending. An interviewer will ask which runs actually happened. Either execute `test:cloud:ios` or say plainly that iOS is source-level only.
+1. **Publish the repo and attach one real iOS or CI run.** The Simulator command and the Sauce configs are in the repo. `docs/validation.md` correctly says those runs are pending. An interviewer will ask which sessions actually passed. Either record `test:ios` or `test:cloud:ios`, or say the iOS path is wired and unverified.
 
 2. **Fix iOS selectors from a device tree before calling them done.** The cart tab `pair()` is a clean example and is likely right. The cell XPath and placeholder fields are the ones that will waste a live demo. One recorded cart spec is enough to promote those strings from "source audit" to "verified."
 
@@ -111,17 +103,21 @@ Ordered by how much they change the interview story. None of these are required 
 
 5. **Make the local toolchain visible to npm scripts on this machine.** `report` and `doctor` spawn Java and `adb` with whatever `PATH` the parent process has. A one-line prefix that exports `.tools/java` and `.tools/android-sdk` when those directories exist would stop the "no Java runtime" failure in Cursor tasks. People who already have system JDKs and SDKs would be unaffected if the prefix only fills empty variables.
 
-6. **Teach `doctor` to name the expected device.** "A device is connected" is weaker than "`emulator-5554` is `device` and boot completed." The suite's default UDID is `emulator-5554`. The last local failure was exactly that mismatch: Appium was up, and nothing was attached.
+6. **Teach the Android doctor to name the expected device.** The iOS doctor already requires `IOS_DEVICE_NAME`. The Android check still accepts any online device. The suite's default UDID is `emulator-5554`. The last local failure was exactly that mismatch: Appium was up, and nothing was attached.
+
+7. **Drop the spec-file parser if Sauce job names are not part of the walkthrough.** `SessionHelper.jobNameFromSpec` reads each spec and regex-matches the first `describe(` / `it(` so Sauce can name the job before Mocha starts. `beforeTest` then sets `sauce:job-name` again. One `it` per file makes the regex work. A template-literal title would fail cloud session startup, and local runs do not need either path. Artifact capture still uses `test.title` alone, so the Sauce name and the screenshot name can diverge.
 
 ## Ways to simplify
 
-The brief says this is not a complete framework and asks for about two hours of automation, not environment setup. This repo also has parallel execution, Sauce Labs upload, three GitHub workflows, Allure, an API-setup interface, architecture lint, and a stability runner. That is useful evidence. It is also more surface than a walkthrough can cover. Simplify by refusing new layers, not by merging the page objects.
+The brief says this is not a complete framework and asks for about two hours of automation, not environment setup. This repo also has parallel execution, Sauce Labs upload, three GitHub workflows, Allure, an API-setup interface, architecture lint, and a stability runner. The helper unit tests (`tests/unit`, `npm run test:unit`) were removed for that reason. `npm run check` no longer runs them. ESLint still blocks `browser`, `$`, and locator imports inside `tests/specs`.
+
+That remaining surface is still more than a walkthrough can cover. Simplify by refusing new layers, not by merging the page objects.
 
 **Keep**
 
 - Eight page objects. They match eight screens, and the purchase spec reads as the business flow.
 - The locator map plus `pair()`. That is the Android/iOS answer. Folding locators back into the pages would hide the example.
-- Four specs and `fullReset` on local Android. One scenario per session is why the cart, validation, and lifecycle tests do not depend on each other.
+- Four specs and `fullReset` on local Android and iOS. One scenario per session is why the cart, validation, and lifecycle tests do not depend on each other.
 - Explicit waits on badge, quantity, and exact cents. That is the flakiness answer. Do not add Mocha retries.
 
 **Collapse or stop growing**

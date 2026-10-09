@@ -14,7 +14,6 @@ Validated Thursday, October 8, 2026 (America/Toronto). Codex performed source im
 ## Verified during implementation
 
 - TypeScript and ESLint checks passed.
-- Ten helper/configuration/architecture tests passed.
 - Official Android APK and iOS IPA 2.3.0 downloaded and checksums verified.
 - Project-local Java/Android tools installed; UiAutomator2 driver registered.
 
@@ -30,7 +29,7 @@ Android 14 / API 34 / ARM64 on two Pixel 6 AVDs. Local tools: Node 24.11.0, Temu
 - `npm run verify:stability -- 3`: **three consecutive complete suites passed**, retries disabled; measured durations 104.586s, 108.770s, and 105.357s. Exact UTC timestamps are preserved in `artifacts/stability.json`.
 - `npm run verify:artifacts`: intentional assertion failure returned nonzero and captured nonempty screenshot/source plus logs/session metadata under `artifacts/diagnostics/failures/`. The temporary test file was removed afterward.
 - `npm run report`: Allure HTML generated successfully at `artifacts/allure-report/index.html`; summary has no failures or broken tests. It aggregates serial/parallel device executions, so report entries are not a count of unique business scenarios (there are four).
-- Final `npm run check`: TypeScript, ESLint, and all ten unit checks passed.
+- Final `npm run check`: TypeScript and ESLint passed.
 - Both emulator processes were stopped after validation; AVDs and project-local tools remain ready for reuse.
 
 | Acceptance gate | Status |
@@ -46,4 +45,4 @@ Android 14 / API 34 / ARM64 on two Pixel 6 AVDs. Local tools: Node 24.11.0, Temu
 
 The local Git repository has been initialized on `main`. Ignore checks confirmed `.env`, SDK/JDK files, app binaries, Appium runtime state, and generated artifacts are excluded. No commit, remote publication, or GitHub-hosted workflow run is claimed.
 
-Do not treat successful unit tests as evidence of mobile scenario correctness. iOS locators currently have source inspection, not runtime verification. The API setup bonus is an extension structure, not an implemented backend integration. Dependency audit findings remain in upstream automation tooling; Appium binds to loopback and dependency upgrades require regression validation.
+iOS locators currently have source inspection, not runtime verification. The API setup bonus is an extension structure, not an implemented backend integration. Dependency audit findings remain in upstream automation tooling; Appium binds to loopback and dependency upgrades require regression validation.

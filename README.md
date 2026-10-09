@@ -22,8 +22,9 @@ Appium is launched and stopped by WDIO. Do not start a second server on port 472
 
 | Command | Purpose |
 | --- | --- |
-| `npm run check` | TypeScript, architecture lint rules, and helper/configuration tests |
-| `npm run test:android` | Four independent Android scenarios |
+| `npm run check` | TypeScript and architecture lint rules |
+| `npm run test:android` | Four independent Android scenarios on a booted emulator |
+| `npm run test:ios` | Same scenarios on a local iOS Simulator |
 | `npm run test:parallel` | Partition the four specs across two booted Android emulators |
 | `npm run test:cloud:android` | Same business specs on a Sauce Labs Android device |
 | `npm run test:cloud:ios` | Same business specs on a Sauce Labs iOS device |
@@ -32,6 +33,17 @@ Appium is launched and stopped by WDIO. Do not start a second server on port 472
 | `npm run report` | Generate standalone Allure HTML report; requires Java |
 
 Run a single scenario with `npm run test:android -- --spec tests/specs/cart.spec.ts`.
+
+Local iOS uses the same specs. Install full Xcode, then:
+
+```sh
+npm run apps:download -- ios-sim
+npm run appium:setup
+npm run doctor -- --ios
+npm run test:ios
+```
+
+`apps:download -- ios` still fetches the device IPA for Sauce Labs. Simulator sessions use `SauceLabs-Demo-App.Simulator.zip`, extracted to `apps/My Demo App.app`. Set `IOS_DEVICE_NAME` to a simulator from `xcrun simctl list devices available`. Leave `IOS_UDID` empty and Appium boots that simulator. Do not run `test:ios` and `test:android` at the same time; both use Appium on port 4723.
 
 ## Test strategy and architecture
 
@@ -47,7 +59,7 @@ scripts/          Setup checks, downloads, uploads, verification commands
 
 Business specs never call the driver, contain selectors, implement reusable functions, or branch by platform. ESLint enforces these boundaries. Page objects do not conceal business assertions: they expose actions and typed values; specs state the expected outcome. Device gestures and lifecycle handling live in `DeviceHelper`.
 
-Each spec contains **one independent scenario**. WDIO creates a new session per spec. Local Android uses `noReset: false` and `fullReset: true` for a clean reinstall. Sauce Labs real-device sessions use `noReset: false`. Adding multiple tests to one spec would require explicit state reset between them; do not assume the existing hook resets application data.
+Each spec contains **one independent scenario**. WDIO creates a new session per spec. Local Android and iOS use `noReset: false` and `fullReset: true` for a clean reinstall. Sauce Labs real-device sessions use `noReset: false`. Adding multiple tests to one spec would require explicit state reset between them; do not assume the existing hook resets application data.
 
 | Scenario | Meaningful assertions |
 | --- | --- |

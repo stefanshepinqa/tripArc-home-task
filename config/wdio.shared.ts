@@ -16,7 +16,11 @@ export const shared: WebdriverIO.Config = {
     ['allure', { outputDir: join(artifactRoot, 'allure-results'), disableWebdriverStepsReporting: true,
       disableWebdriverScreenshotsReporting: false }],
   ],
-  beforeTest: async function (test) { await SessionHelper.beforeScenario(test.title); },
+  beforeSession(_config, capabilities, specs) {
+    const sauce = (capabilities as { 'sauce:options'?: { name?: string } })['sauce:options'];
+    if (sauce && specs[0]) sauce.name = SessionHelper.jobNameFromSpec(specs[0]);
+  },
+  beforeTest: async function (test) { await SessionHelper.beforeScenario(SessionHelper.jobName(test)); },
   afterTest: async function (test, _context, result) {
     await SessionHelper.afterScenario(test.title, result.passed);
   },

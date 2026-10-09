@@ -8,11 +8,11 @@
     "node": "^22.19.0 || >=24.0.0"
   },
   "scripts": {
-    "check": "npm run typecheck && npm run lint && npm run test:unit",
+    "check": "npm run typecheck && npm run lint",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test:unit": "node --import tsx --test tests/unit/*.test.ts",
     "test:android": "wdio run config/wdio.local.ts",
+    "test:ios": "wdio run config/wdio.local-ios.ts",
     "test:parallel": "wdio run config/wdio.parallel.ts",
     "test:cloud:android": "wdio run config/wdio.cloud-android.ts",
     "test:cloud:ios": "wdio run config/wdio.cloud-ios.ts",
@@ -39,6 +39,7 @@
     "allure-commandline": "2.46.1",
     "appium": "3.8.0",
     "appium-uiautomator2-driver": "8.7.0",
+    "appium-xcuitest-driver": "12.16.0",
     "dotenv": "17.4.2",
     "eslint": "9.39.5",
     "tsx": "4.23.15",

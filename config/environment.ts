@@ -15,6 +15,12 @@ export function localApp(env: NodeJS.ProcessEnv = process.env): string {
   if (!existsSync(app)) throw new Error(`APK not found: ${app}. Run npm run apps:download -- android`);
   return app;
 }
+export function localIosApp(env: NodeJS.ProcessEnv = process.env): string {
+  const app = resolve(env.IOS_APP_PATH || 'apps/My Demo App.app');
+  if (app.endsWith('.ipa')) throw new Error(`Simulator sessions cannot install an IPA (${app}). Run npm run apps:download -- ios-sim`);
+  if (!existsSync(app)) throw new Error(`Simulator app not found: ${app}. Run npm run apps:download -- ios-sim`);
+  return app;
+}
 export function deviceIds(env: NodeJS.ProcessEnv = process.env): string[] {
   const ids = (env.ANDROID_UDIDS || env.ANDROID_UDID || 'emulator-5554').split(',').map(x => x.trim());
   if (ids.some(x => !x) || new Set(ids).size !== ids.length) throw new Error('Android device IDs must be nonempty and unique');

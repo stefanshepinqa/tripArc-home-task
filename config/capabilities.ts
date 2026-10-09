@@ -1,5 +1,6 @@
 import type { Platform } from '../src/types/domain.js';
-import { cloudApp, deviceIds, localApp, required } from './environment.js';
+import { cloudApp, deviceIds, localApp, localIosApp, required } from './environment.js';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const specFiles = [
@@ -27,6 +28,24 @@ export function androidCapabilities(parallel = false, env: NodeJS.ProcessEnv = p
   }));
 }
 
+export function iosCapabilities(env: NodeJS.ProcessEnv = process.env) {
+  const udid = env.IOS_UDID?.trim();
+  const platformVersion = env.IOS_PLATFORM_VERSION?.trim();
+  return [{
+    platformName: 'iOS', 'appium:automationName': 'XCUITest',
+    'appium:app': localIosApp(env), 'appium:bundleId': 'com.saucelabs.mydemo.app.ios',
+    'appium:deviceName': env.IOS_DEVICE_NAME?.trim() || 'iPhone 16',
+    ...(udid ? { 'appium:udid': udid } : {}),
+    ...(platformVersion ? { 'appium:platformVersion': platformVersion } : {}),
+    'appium:noReset': false, 'appium:fullReset': true,
+    'appium:language': 'en', 'appium:locale': 'en_US',
+    'appium:newCommandTimeout': 120, 'appium:wdaLaunchTimeout': 300_000,
+    'appium:simulatorStartupTimeout': 180_000,
+    'appium:derivedDataPath': resolve('.appium/wda'),
+    'wdio:maxInstances': 1,
+  }];
+}
+
 export function cloudCapabilities(platform: Platform, env: NodeJS.ProcessEnv = process.env) {
   const android = platform === 'android';
   return [{
@@ -42,7 +61,7 @@ export function cloudCapabilities(platform: Platform, env: NodeJS.ProcessEnv = p
     // The suite deliberately handles its shipping-validation alert.
     ...(android ? { 'appium:autoGrantPermissions': true } : {}),
     'sauce:options': {
-      appiumVersion: env.SAUCE_APPIUM_VERSION?.trim() || 'stable',
+      appiumVersion: env.SAUCE_APPIUM_VERSION?.trim() || 'appium3-2026-10',
       name: `${platform} native business scenarios`,
       build: env.BUILD_NAME || `triparc-${new Date().toISOString().slice(0, 10)}`,
     },
