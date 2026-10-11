@@ -8,7 +8,8 @@ const iosCartFooter = '//XCUIElementTypeStaticText[@label="Total:"]/..';
 const iosReviewFooter = '//XCUIElementTypeStaticText[@label="Total:"]/..';
 export const navigation = {
   cart: pair(id('cartIV'), '~Cart-tab-item'),
-  badge: pair(id('cartTV'), '//XCUIElementTypeStaticText[@label="Cart"]/..//XCUIElementTypeStaticText[string(number(@label)) != "NaN"]'),
+  // The count sits beside the cart tab button, over the gray circle. It is not inside the button.
+  badge: pair(id('cartTV'), '//XCUIElementTypeButton[@name="Cart-tab-item"]/following-sibling::XCUIElementTypeOther/XCUIElementTypeStaticText'),
 };
 export const catalog = {
   ready: pair('~title', '~Catalog-screen'),
@@ -32,6 +33,8 @@ export const cart = {
 export const login = {
   username: pair(id('nameET'), '-ios class chain:**/XCUIElementTypeTextField[1]'),
   password: pair(id('passwordET'), '-ios class chain:**/XCUIElementTypeSecureTextField[1]'),
+  // iOS shows these rows under the fields. Tapping one fills both values.
+  savedUser: (email: string) => pair(id('nameET'), iosPredicate(`type == 'XCUIElementTypeButton' AND name == ${JSON.stringify(email)}`)),
   submit: pair(id('loginBtn'), iosButton('Login')),
 };
 const field = (android: string, placeholder: string) => pair(id(android), iosPredicate(`type == 'XCUIElementTypeTextField' AND value == ${JSON.stringify(placeholder)}`));

@@ -35,7 +35,7 @@ Three other differences are already isolated the same way:
 
 - Product identity. Android expects `Sauce Labs Backpack`. iOS English copy is `Sauce Labs Backpack - Black`. `FixtureHelper.product()` selects the row in `src/data/fixtures.ts`. Both are $29.99, and both apps add $5.99 delivery.
 - Shipping validation behavior. Android renders `fullNameErrorTV` inline. iOS presents an alert titled `Validation Error!` whose message is `Please provide your full name.` (`ShippingAddressViewController.swift` on tag 2.3.0). `ShippingPage` scrolls back to the inline error on Android and dismisses the alert on iOS. The spec still asserts the same message and that checkout did not advance.
-- Capabilities. `cloudCapabilities()` switches `UiAutomator2` / `XCUITest` and the Sauce Labs device variables. Local Android adds `udid`, `systemPort`, and `fullReset`. Local iOS uses `XCUITest`, bundle id `com.saucelabs.mydemo.app.ios`, and leaves alerts untouched so the shipping scenario can read them.
+- Capabilities. `cloudCapabilities()` switches `UiAutomator2` / `XCUITest` and the Sauce Labs device variables. Local Android adds `udid` and `systemPort`. Local iOS uses `XCUITest`, bundle id `com.saucelabs.mydemo.app.ios`, and leaves alerts untouched so the shipping scenario can read them. Both local configs use `noReset: false` and `fullReset: false`, so the device stays booted and only the app is reinstalled.
 
 ## What is missing
 
@@ -87,7 +87,7 @@ Leave `autoGrantPermissions` as Android-only, which `cloudCapabilities()` alread
 
 This path is now the `test:ios` command. Steps are in [setup](setup.md). Do not point Appium at the IPA.
 
-The first session compiles WebDriverAgent into `.appium/wda` and can take several minutes. `fullReset` then reinstalls the app for each of the four specs. Start with `npm run test:ios -- --spec tests/specs/cart.spec.ts`. It exercises the catalog tap, the cart row, and the quantity wait, which are the fragile iOS selectors, and it never opens the validation alert.
+The first session compiles WebDriverAgent into `.appium/wda` and can take several minutes. Later specs reuse that simulator and reinstall the app. Start with `npm run test:ios -- --spec tests/specs/cart.spec.ts`. It exercises the catalog tap, the cart row, and the quantity wait, which are the fragile iOS selectors, and it never opens the validation alert.
 
 ## Improvements worth making
 
@@ -117,7 +117,7 @@ That remaining surface is still more than a walkthrough can cover. Simplify by r
 
 - Eight page objects. They match eight screens, and the purchase spec reads as the business flow.
 - The locator map plus `pair()`. That is the Android/iOS answer. Folding locators back into the pages would hide the example.
-- Four specs and `fullReset` on local Android and iOS. One scenario per session is why the cart, validation, and lifecycle tests do not depend on each other.
+- Four specs, each in its own session, with the app reinstalled and the device left running. One scenario per session is why the cart, validation, and lifecycle tests do not depend on each other.
 - Explicit waits on badge, quantity, and exact cents. That is the flakiness answer. Do not add Mocha retries.
 
 **Collapse or stop growing**

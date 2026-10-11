@@ -6,9 +6,10 @@ export class ProductDetailsPage extends BasePage {
   async addToCart(): Promise<void> {
     await this.waitUntilReady();
     await this.click(product.add, true);
+    // XCUITest reports this tab-bar count as visible="false" even when its label is on screen.
     await browser.waitUntil(async () => {
-      const badge = await browser.$(this.selector(navigation.badge));
-      return await badge.isDisplayed() && Number(await badge.getText()) > 0;
+      const count = Number(await browser.$(this.selector(navigation.badge)).getText());
+      return Number.isInteger(count) && count > 0;
     }, { timeout: 15_000, timeoutMsg: 'Cart badge did not update after adding product' });
   }
 }

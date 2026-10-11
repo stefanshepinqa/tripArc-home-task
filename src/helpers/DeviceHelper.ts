@@ -4,22 +4,6 @@ import type { Platform } from '../types/domain.js';
 export class DeviceHelper {
   static get platform(): Platform { return browser.isAndroid ? 'android' : 'ios'; }
 
-  static async dismissKeyboard(): Promise<void> {
-    if (!(await browser.isKeyboardShown())) return;
-    if (browser.isAndroid) {
-      await browser.hideKeyboard();
-    } else {
-      try {
-        await browser.execute('mobile: hideKeyboard', { keys: ['Done', 'Return'] });
-      } catch {
-        // Some native number pads have no dismissal key. Leave the keyboard
-        // visible and let the next bounded scroll expose the target; do not
-        // swipe blindly after every field and scroll past the following input.
-        console.warn('iOS keyboard has no dismissal key; continuing with bounded form scrolling');
-      }
-    }
-  }
-
   static async scrollTo(selector: string, maxSwipes = 6, direction: 'down' | 'up' = 'down'): Promise<WebdriverIO.Element> {
     for (let attempt = 0; attempt <= maxSwipes; attempt++) {
       const element = await browser.$(selector).getElement();
