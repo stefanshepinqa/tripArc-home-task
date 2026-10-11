@@ -1,8 +1,23 @@
 import { browser } from '@wdio/globals';
-import { cart } from '../locators/screens.js';
+import { androidId as id, iosButton, pair } from '../locators/strategies.js';
 import { MoneyHelper } from '../helpers/MoneyHelper.js';
 import type { CartSnapshot } from '../types/domain.js';
 import { BasePage } from './BasePage.js';
+
+const iosCell = '//XCUIElementTypeTable/XCUIElementTypeCell[1]';
+const iosCartFooter = '//XCUIElementTypeStaticText[@label="Total:"]/..';
+
+const cart = {
+  ready: pair(id('cartBt'), '~ProceedToCheckout'),
+  name: pair(id('titleTV'), `${iosCell}//XCUIElementTypeStaticText[starts-with(@label,"Sauce Labs")]`),
+  price: pair(id('priceTV'), `${iosCell}//XCUIElementTypeStaticText[starts-with(@label,"$")]`),
+  quantity: pair(id('noTV'), `${iosCell}//XCUIElementTypeStaticText[string(number(@label)) != "NaN"]`),
+  increase: pair(id('plusIV'), iosButton('AddPlus Icons')),
+  decrease: pair(id('minusIV'), iosButton('SubtractMinus Icons')),
+  subtotal: pair(id('totalPriceTV'), `${iosCartFooter}/XCUIElementTypeStaticText[last()]`),
+  checkout: pair(id('cartBt'), '~ProceedToCheckout'),
+};
+
 export class CartPage extends BasePage {
   async waitUntilReady(): Promise<void> { await this.visible(cart.ready); }
   async readItem(): Promise<CartSnapshot> {
