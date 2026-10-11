@@ -115,7 +115,7 @@ Failures capture screenshots, XML page source, session metadata, and device logs
 
 The opt-in intentional-failure diagnostic writes to `artifacts/diagnostics/`, keeping its expected failure out of normal suite reports. `ARTIFACTS_DIR` can isolate output for other runs.
 
-GitHub Actions includes static checks, Sauce Labs Android runs on push and pull request, and a manually triggered job for a chosen Android or iOS device. Add `SAUCE_USERNAME` and `SAUCE_ACCESS_KEY` repository secrets before those jobs. The Android job uses a Samsung Galaxy A23 5G on OS 13 in `us-west-1` unless `SAUCE_ANDROID_DEVICE`, `SAUCE_ANDROID_OS`, or `SAUCE_REGION` repository variables override them. CI uploads artifacts on failure as well as success; it does not publish a site or reports publicly.
+GitHub Actions includes static checks, Sauce Labs Android and iOS cloud jobs on push and pull request, and a manually triggered job for a chosen device. Add `SAUCE_USERNAME` and `SAUCE_ACCESS_KEY` repository secrets. Default devices are Samsung Galaxy A23 5G (OS 13) and iPhone 13 Pro (OS 18) in `us-west-1`; override with `SAUCE_ANDROID_DEVICE`, `SAUCE_ANDROID_OS`, `SAUCE_IOS_DEVICE`, `SAUCE_IOS_OS`, or `SAUCE_REGION` repository variables. CI uploads artifacts on failure as well as success; it does not publish a site or reports publicly.
 
 ## API setup extension
 
