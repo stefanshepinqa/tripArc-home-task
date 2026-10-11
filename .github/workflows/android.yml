@@ -1,4 +1,4 @@
-name: Android emulator
+name: Android Sauce Labs
 on:
   push:
     branches: [main]
@@ -13,6 +13,14 @@ jobs:
   android:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      SAUCE_USERNAME: ${{ secrets.SAUCE_USERNAME }}
+      SAUCE_ACCESS_KEY: ${{ secrets.SAUCE_ACCESS_KEY }}
+      SAUCE_REGION: ${{ vars.SAUCE_REGION || 'us-west-1' }}
+      SAUCE_ANDROID_DEVICE: ${{ vars.SAUCE_ANDROID_DEVICE || 'Samsung Galaxy A23 5G' }}
+      SAUCE_ANDROID_OS: ${{ vars.SAUCE_ANDROID_OS || '13' }}
+      SAUCE_APPIUM_VERSION: ${{ vars.SAUCE_APPIUM_VERSION || 'appium3-2026-10' }}
+      BUILD_NAME: triparc-${{ github.run_id }}-android
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -24,21 +32,9 @@ jobs:
           distribution: temurin
           java-version: '17'
       - run: npm ci
-      - run: npm run appium:setup
       - run: npm run apps:download -- android
-      - name: Enable KVM
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-      - uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 34
-          arch: x86_64
-          target: google_apis
-          profile: pixel_6
-          disable-animations: true
-          script: npm run test:android
+      - run: npm run cloud:upload -- android
+      - run: npm run test:cloud:android
       - name: Build Allure report
         if: always()
         run: npm run report

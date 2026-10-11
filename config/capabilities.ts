@@ -1,7 +1,6 @@
 import type { Platform } from '../src/types/domain.js';
 import { cloudApp, deviceIds, localApp, localIosApp, required } from './environment.js';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -80,33 +79,6 @@ function selectIosSimulator(env: NodeJS.ProcessEnv): { udid: string; name: strin
   return chosen;
 }
 
-const repoRoot = fileURLToPath(new URL('..', import.meta.url));
-
-// iOS 18 still presents the software keyboard when a hardware keyboard is
-// connected, and checkout footers sit underneath it. This library keeps that
-// keyboard suppressed inside the app process so typing still reaches the field.
-function hideSoftwareKeyboardLibrary(): string {
-  const source = resolve(repoRoot, 'scripts/ios/HideSoftwareKeyboard.m');
-  const output = resolve(repoRoot, '.appium/HideSoftwareKeyboard.dylib');
-  mkdirSync(resolve(repoRoot, '.appium'), { recursive: true });
-  const current = statSync(output, { throwIfNoEntry: false });
-  const newer = !current || current.mtimeMs < statSync(source).mtimeMs;
-  if (newer) {
-    const compile = spawnSync('xcrun', [
-      '-sdk', 'iphonesimulator', 'clang', '-target', 'arm64-apple-ios16.0-simulator',
-      '-shared', '-fobjc-arc', '-o', output, source, '-framework', 'Foundation',
-    ], { encoding: 'utf8' });
-    if (compile.status !== 0) {
-      throw new Error(`Could not build the iOS keyboard helper. ${compile.stderr || compile.stdout || compile.error?.message || ''}`.trim());
-    }
-    const sign = spawnSync('codesign', ['-s', '-', '--force', output], { encoding: 'utf8' });
-    if (sign.status !== 0) {
-      throw new Error(`Could not sign the iOS keyboard helper. ${sign.stderr || sign.stdout || sign.error?.message || ''}`.trim());
-    }
-  }
-  return output;
-}
-
 export function iosCapabilities(env: NodeJS.ProcessEnv = process.env) {
   const simulator = selectIosSimulator(env);
   return [{
@@ -117,7 +89,6 @@ export function iosCapabilities(env: NodeJS.ProcessEnv = process.env) {
     // fullReset shuts down and erases the simulator. noReset false still removes and reinstalls the app.
     'appium:noReset': false, 'appium:fullReset': false,
     'appium:connectHardwareKeyboard': true,
-    'appium:processArguments': { env: { DYLD_INSERT_LIBRARIES: hideSoftwareKeyboardLibrary() } },
     'appium:language': 'en', 'appium:locale': 'en_US',
     'appium:newCommandTimeout': 120, 'appium:wdaLaunchTimeout': 300_000,
     'appium:simulatorStartupTimeout': 180_000,
