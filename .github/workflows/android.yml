@@ -23,6 +23,8 @@ jobs:
       BUILD_NAME: triparc-${{ github.run_id }}-android
     steps:
       - uses: actions/checkout@v6
+      - name: Set build date
+        run: echo "BUILD_NAME=triparc-$(date -u +%Y-%m-%d)-android" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
@@ -58,6 +60,8 @@ jobs:
       BUILD_NAME: triparc-${{ github.run_id }}-ios
     steps:
       - uses: actions/checkout@v6
+      - name: Set build date
+        run: echo "BUILD_NAME=triparc-$(date -u +%Y-%m-%d)-ios" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
