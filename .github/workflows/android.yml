@@ -1,4 +1,4 @@
-name: Android Sauce Labs
+name: Sauce Labs
 on:
   push:
     branches: [main]
@@ -7,7 +7,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: android-${{ github.ref }}
+  group: saucelabs-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   android:
@@ -42,5 +42,40 @@ jobs:
         if: always()
         with:
           name: android-results
+          path: artifacts/
+          retention-days: 7
+
+  ios:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SAUCE_USERNAME: ${{ secrets.SAUCE_USERNAME }}
+      SAUCE_ACCESS_KEY: ${{ secrets.SAUCE_ACCESS_KEY }}
+      SAUCE_REGION: ${{ vars.SAUCE_REGION || 'us-west-1' }}
+      SAUCE_IOS_DEVICE: ${{ vars.SAUCE_IOS_DEVICE || 'iPhone 13 Pro' }}
+      SAUCE_IOS_OS: ${{ vars.SAUCE_IOS_OS || '18' }}
+      SAUCE_APPIUM_VERSION: ${{ vars.SAUCE_APPIUM_VERSION || 'appium3-2026-10' }}
+      BUILD_NAME: triparc-${{ github.run_id }}-ios
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: npm ci
+      - run: npm run apps:download -- ios
+      - run: npm run cloud:upload -- ios
+      - run: npm run test:cloud:ios
+      - name: Build Allure report
+        if: always()
+        run: npm run report
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-results
           path: artifacts/
           retention-days: 7
