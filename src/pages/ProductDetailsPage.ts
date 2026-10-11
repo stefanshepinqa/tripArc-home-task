@@ -1,6 +1,12 @@
 import { browser } from '@wdio/globals';
-import { product, navigation } from '../locators/screens.js';
-import { BasePage } from './BasePage.js';
+import { androidId as id, pair } from '../locators/strategies.js';
+import { BasePage, navigation } from './BasePage.js';
+
+const product = {
+  ready: pair(id('cartBt'), '~ProductDetails-screen'),
+  add: pair(id('cartBt'), '~AddToCart'),
+};
+
 export class ProductDetailsPage extends BasePage {
   async waitUntilReady(): Promise<void> { await this.visible(product.ready); }
   async addToCart(): Promise<void> {

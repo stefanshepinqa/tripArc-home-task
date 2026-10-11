@@ -1,7 +1,11 @@
 import { browser } from '@wdio/globals';
-import { LocatorHelper, type PlatformLocator } from '../locators/strategies.js';
+import { LocatorHelper, type PlatformLocator, androidId as id, pair } from '../locators/strategies.js';
 import { DeviceHelper } from '../helpers/DeviceHelper.js';
-import { navigation } from '../locators/screens.js';
+
+export const navigation = {
+  cart: pair(id('cartIV'), '~Cart-tab-item'),
+  badge: pair(id('cartTV'), '//XCUIElementTypeButton[@name="Cart-tab-item"]/following-sibling::XCUIElementTypeOther/XCUIElementTypeStaticText'),
+};
 
 export abstract class BasePage {
   protected selector(locator: PlatformLocator): string {
