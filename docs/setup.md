@@ -59,7 +59,7 @@ npm run test:ios
 
 `npm run apps:download -- ios-sim` verifies `SauceLabs-Demo-App.Simulator.zip` and extracts `apps/My Demo App.app`. The IPA from `apps:download -- ios` is the real-device build and cannot be installed on a Simulator.
 
-Set `IOS_DEVICE_NAME` in `.env` to one of the listed devices, such as `iPhone 16`. Appium boots that simulator when `IOS_UDID` is empty. To pin a simulator that is already booted, set `IOS_UDID` to its UUID from `xcrun simctl list devices booted`. The pinned app needs an iOS 16.6 or newer runtime. The first session compiles WebDriverAgent into `.appium/wda` and can take several minutes. Later sessions reuse that build.
+Set `IOS_DEVICE_NAME` in `.env` to one of the listed devices, such as `iPhone 16`. The runner pins that simulator's UDID, connects its hardware keyboard, and keeps the software keyboard from covering footer buttons such as To Payment. It leaves the simulator booted between specs. Appium deletes a simulator it created itself, which is why a temporary `appiumTest-…` device used to appear and disappear for every spec. Set `IOS_UDID` only to choose a different simulator. Leave `IOS_PLATFORM_VERSION` empty unless you need a specific installed runtime. The pinned app needs an iOS 16.6 or newer runtime. The first session compiles WebDriverAgent into `.appium/wda` and can take several minutes. Later sessions reuse that build and the same simulator.
 
 Open the Simulator window yourself with `open -a Simulator` if you want to watch the run. Do not start another Appium server on port 4723, and do not run the Android suite against the same port at the same time.
 
@@ -73,4 +73,5 @@ Open the Simulator window yourself with `open -a Simulator` if you want to watch
 - `xcodebuild` says the active developer directory is Command Line Tools: install Xcode and run `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`.
 - Simulator app missing: `npm run apps:download -- ios-sim`. Do not point `IOS_APP_PATH` at the IPA.
 - Named simulator missing: set `IOS_DEVICE_NAME` to a device from `xcrun simctl list devices available`.
+- `No supported iOS runtime with version '18.2'`: that number is the Xcode SDK, not an installed runtime. Leave `IOS_PLATFORM_VERSION` empty, or set it to a version from `xcrun simctl list runtimes available`.
 - iOS cloud session cannot start: verify the Sauce Labs data center, uploaded `storage:` id, and a real device/OS pair from that account before changing the business test. Sauce Labs re-signs the IPA.

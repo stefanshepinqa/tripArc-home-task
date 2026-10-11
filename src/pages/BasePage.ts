@@ -24,8 +24,10 @@ export abstract class BasePage {
   protected async fill(locator: PlatformLocator, value: string): Promise<void> {
     const element = await DeviceHelper.scrollTo(this.selector(locator));
     await element.waitForEnabled({ timeout: 10_000 });
+    // setValue types into whichever field still has focus. Tap this one first.
+    await element.click();
     await element.setValue(value);
-    await DeviceHelper.dismissKeyboard();
+    if (browser.isAndroid && await browser.isKeyboardShown()) await browser.hideKeyboard();
   }
   async openCart(): Promise<void> { await this.click(navigation.cart); }
 }

@@ -5,7 +5,7 @@ export const products: Record<Platform, Product> = {
   android: { name: 'Sauce Labs Backpack', unitPriceCents: 2999 },
   ios: { name: 'Sauce Labs Backpack - Black', unitPriceCents: 2999 },
 };
-export const credentials: Credentials = { username: 'bod@example.com', password: '10203040' };
+export const credentials: Credentials = { username: 'bob@example.com', password: '10203040' };
 export const shippingDetails: ShippingDetails = {
   fullName: 'Alex Tester', address1: '123 Test Street', city: 'Toronto',
   state: 'Ontario', zip: '12345', country: 'Canada',

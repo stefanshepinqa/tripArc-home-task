@@ -43,7 +43,7 @@ npm run doctor -- --ios
 npm run test:ios
 ```
 
-`apps:download -- ios` still fetches the device IPA for Sauce Labs. Simulator sessions use `SauceLabs-Demo-App.Simulator.zip`, extracted to `apps/My Demo App.app`. Set `IOS_DEVICE_NAME` to a simulator from `xcrun simctl list devices available`. Leave `IOS_UDID` empty and Appium boots that simulator. Do not run `test:ios` and `test:android` at the same time; both use Appium on port 4723.
+`apps:download -- ios` still fetches the device IPA for Sauce Labs. Simulator sessions use `SauceLabs-Demo-App.Simulator.zip`, extracted to `apps/My Demo App.app`. Set `IOS_DEVICE_NAME` to a simulator from `xcrun simctl list devices available`. The suite reuses that simulator across specs. Do not run `test:ios` and `test:android` at the same time; both use Appium on port 4723.
 
 ## Test strategy and architecture
 
@@ -59,7 +59,7 @@ scripts/          Setup checks, downloads, uploads, verification commands
 
 Business specs never call the driver, contain selectors, implement reusable functions, or branch by platform. ESLint enforces these boundaries. Page objects do not conceal business assertions: they expose actions and typed values; specs state the expected outcome. Device gestures and lifecycle handling live in `DeviceHelper`.
 
-Each spec contains **one independent scenario**. WDIO creates a new session per spec. Local Android and iOS use `noReset: false` and `fullReset: true` for a clean reinstall. Sauce Labs real-device sessions use `noReset: false`. Adding multiple tests to one spec would require explicit state reset between them; do not assume the existing hook resets application data.
+Each spec contains **one independent scenario**. WDIO creates a new session per spec. Local Android and iOS use `noReset: false` and `fullReset: false`: the emulator or simulator stays booted, and the app under test is uninstalled and reinstalled. Sauce Labs real-device sessions use `noReset: false`. Adding multiple tests to one spec would require explicit state reset between them; do not assume the existing hook resets application data.
 
 | Scenario | Meaningful assertions |
 | --- | --- |
