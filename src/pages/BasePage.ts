@@ -22,12 +22,23 @@ export abstract class BasePage {
     return (await this.visible(locator)).getText();
   }
   protected async fill(locator: PlatformLocator, value: string): Promise<void> {
-    const element = await DeviceHelper.scrollTo(this.selector(locator));
+    const sel = this.selector(locator);
+    let element = await browser.$(sel).getElement();
+    if (!(await element.isDisplayed())) {
+      element = await DeviceHelper.scrollTo(sel, 2);
+    }
     await element.waitForEnabled({ timeout: 10_000 });
-    // setValue types into whichever field still has focus. Tap this one first.
     await element.click();
     await element.setValue(value);
-    if (browser.isAndroid && await browser.isKeyboardShown()) await browser.hideKeyboard();
+    if (browser.isAndroid) {
+      if (await browser.isKeyboardShown()) await browser.hideKeyboard();
+      return;
+    }
+    // Return dismisses the keyboard on every field except the last in the tab order.
+    if (await browser.isKeyboardShown()) {
+      const returnKey = await browser.$('~Return');
+      if (await returnKey.isDisplayed()) await returnKey.click();
+    }
   }
   async openCart(): Promise<void> { await this.click(navigation.cart); }
 }

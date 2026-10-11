@@ -11,8 +11,14 @@ export class ShippingPage extends BasePage {
     await this.fill(shipping.address1, details.address1);
     await this.fill(shipping.city, details.city);
     await this.fill(shipping.zip, details.zip);
-    await this.fill(shipping.state, details.state);
     await this.fill(shipping.country, details.country);
+    await this.fill(shipping.state, details.state);
+    // On iOS, Return moves focus forward through the tab order, dismissing
+    // the keyboard on every field except the last. Background the app briefly
+    // to force-dismiss the keyboard after the final field.
+    if (browser.isIOS && (await browser.isKeyboardShown())) {
+      await browser.background(1);
+    }
   }
   async submitShipping(): Promise<void> { await this.click(shipping.submit, true); }
   async readNameValidation(): Promise<string> {
