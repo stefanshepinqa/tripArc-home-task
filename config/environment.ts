@@ -12,13 +12,13 @@ export function required(name: string, env: NodeJS.ProcessEnv = process.env): st
 }
 export function localApp(env: NodeJS.ProcessEnv = process.env): string {
   const app = resolve(env.ANDROID_APP_PATH || 'apps/mda-2.3.0-27.apk');
-  if (!existsSync(app)) throw new Error(`APK not found: ${app}. Run npm run apps:download -- android`);
+  if (!existsSync(app)) throw new Error(`APK not found: ${app}. Download and place it in apps/`);
   return app;
 }
 export function localIosApp(env: NodeJS.ProcessEnv = process.env): string {
   const app = resolve(env.IOS_APP_PATH || 'apps/My Demo App.app');
-  if (app.endsWith('.ipa')) throw new Error(`Simulator sessions cannot install an IPA (${app}). Run npm run apps:download -- ios-sim`);
-  if (!existsSync(app)) throw new Error(`Simulator app not found: ${app}. Run npm run apps:download -- ios-sim`);
+  if (app.endsWith('.ipa')) throw new Error(`Simulator sessions cannot install an IPA (${app}). Use the .app from the Simulator zip.`);
+  if (!existsSync(app)) throw new Error(`Simulator app not found: ${app}. Download the Simulator zip and extract My Demo App.app into apps/`);
   return app;
 }
 export function deviceIds(env: NodeJS.ProcessEnv = process.env): string[] {

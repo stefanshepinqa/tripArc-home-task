@@ -16,14 +16,8 @@
     "test:parallel": "wdio run config/wdio.parallel.ts",
     "test:cloud:android": "wdio run config/wdio.cloud-android.ts",
     "test:cloud:ios": "wdio run config/wdio.cloud-ios.ts",
-    "apps:download": "node --import tsx scripts/download-apps.ts",
-    "cloud:upload": "node --import tsx scripts/upload-app.ts",
-    "doctor": "node --import tsx scripts/doctor.ts",
     "report": "allure generate artifacts/allure-results --clean -o artifacts/allure-report",
-    "report:open": "allure open artifacts/allure-report",
-    "verify:stability": "node --import tsx scripts/stability.ts",
-    "verify:artifacts": "node --import tsx scripts/verify-artifacts.ts",
-    "appium:setup": "node --import tsx scripts/register-driver.ts"
+    "report:open": "allure open artifacts/allure-report"
   },
   "devDependencies": {
     "@eslint/js": "9.39.5",

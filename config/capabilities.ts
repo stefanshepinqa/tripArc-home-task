@@ -1,13 +1,16 @@
 import type { Platform } from '../src/types/domain.js';
 import { cloudApp, deviceIds, localApp, localIosApp, required } from './environment.js';
-import { spawnSync } from 'node:child_process';
-import { resolve } from 'node:path';
+import { resolve, dirname } from 'node:path';
+import { globSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-export const specFiles = [
-  './tests/specs/purchase.spec.ts', './tests/specs/cart.spec.ts',
-  './tests/specs/checkout-validation.spec.ts', './tests/specs/lifecycle.spec.ts',
-].map(path => fileURLToPath(new URL(`../${path}`, import.meta.url)));
+export const specFiles = ['./tests/specs/**/*.spec.ts'];
+
+const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+/** Resolved absolute spec file paths for parallel partitioning. */
+const resolvedSpecs = globSync('tests/specs/**/*.spec.ts', { cwd: projectRoot })
+  .sort()
+  .map(f => resolve(projectRoot, f));
 
 export function androidCapabilities(parallel = false, env: NodeJS.ProcessEnv = process.env) {
   const devices = deviceIds(env);
@@ -26,66 +29,20 @@ export function androidCapabilities(parallel = false, env: NodeJS.ProcessEnv = p
     'appium:autoGrantPermissions': true, 'appium:newCommandTimeout': 120,
     'wdio:maxInstances': 1,
     // Partition specs rather than executing the whole suite on each emulator.
-    ...(parallel ? { 'wdio:specs': specFiles.filter((_, i) => i % 2 === index) } : {}),
+    ...(parallel ? { 'wdio:specs': resolvedSpecs.filter((_, i) => i % 2 === index) } : {}),
   }));
 }
 
-interface SimRuntime { identifier?: string; version?: string; isAvailable?: boolean }
-interface SimDevice { udid?: string; name?: string; state?: string; isAvailable?: boolean }
-
-function simctlJson<T>(args: string[]): T {
-  const result = spawnSync('xcrun', ['simctl', ...args], { encoding: 'utf8' });
-  if (result.status !== 0) {
-    throw new Error(`Could not run simctl ${args.join(' ')}. ${result.stderr || result.stdout || result.error?.message || ''}`.trim());
-  }
-  return JSON.parse(result.stdout) as T;
-}
-
-// Appium matches simulators on the runtime id (iOS-18-3 -> 18.3). The runtime's
-// marketed version is 18.3.1. Passing that makes Appium miss iPhone 16, create
-// an appiumTest simulator, and delete it when the spec ends.
-function sdkFromRuntime(identifier: string): string | undefined {
-  return identifier.match(/SimRuntime\.iOS-(\d+(?:-\d+)*)/)?.[1]?.replace(/-/g, '.');
-}
-
-function selectIosSimulator(env: NodeJS.ProcessEnv): { udid: string; name: string; platformVersion: string } {
-  const name = env.IOS_DEVICE_NAME?.trim() || 'iPhone 16';
-  const requestedUdid = env.IOS_UDID?.trim();
-  const requestedVersion = env.IOS_PLATFORM_VERSION?.trim();
-  const { runtimes = [] } = simctlJson<{ runtimes?: SimRuntime[] }>(['list', 'runtimes', 'available', '-j']);
-  const { devices = {} } = simctlJson<{ devices?: Record<string, SimDevice[]> }>(['list', 'devices', 'available', '-j']);
-  const candidates = Object.entries(devices).flatMap(([runtimeId, list]) => {
-    const platformVersion = sdkFromRuntime(runtimeId);
-    const runtimeVersion = runtimes.find(runtime => runtime.identifier === runtimeId && runtime.isAvailable !== false)?.version;
-    if (!platformVersion) return [];
-    return list.flatMap(device => {
-      if (device.isAvailable === false || !device.udid || !device.name) return [];
-      if (requestedVersion && requestedVersion !== platformVersion && requestedVersion !== runtimeVersion) return [];
-      return [{ udid: device.udid, name: device.name, state: device.state ?? '', platformVersion }];
-    });
-  });
-  const chosen = requestedUdid
-    ? candidates.find(device => device.udid.toLowerCase() === requestedUdid.toLowerCase())
-    : candidates
-      .filter(device => device.name === name)
-      .sort((left, right) => Number(left.state === 'Booted') - Number(right.state === 'Booted')
-        || left.platformVersion.localeCompare(right.platformVersion, undefined, { numeric: true }))
-      .at(-1);
-  if (!chosen) {
-    throw new Error(requestedUdid
-      ? `No available simulator with IOS_UDID=${requestedUdid}.`
-      : `No available simulator named "${name}". Set IOS_DEVICE_NAME from \`xcrun simctl list devices available\`.`);
-  }
-  return chosen;
-}
-
 export function iosCapabilities(env: NodeJS.ProcessEnv = process.env) {
-  const simulator = selectIosSimulator(env);
+  const deviceName = required('IOS_DEVICE_NAME', env);
+  const platformVersion = required('IOS_PLATFORM_VERSION', env);
+  const udid = env.IOS_UDID?.trim() || '';
   return [{
     platformName: 'iOS', 'appium:automationName': 'XCUITest',
     'appium:app': localIosApp(env), 'appium:bundleId': 'com.saucelabs.mydemo.app.ios',
-    'appium:deviceName': simulator.name, 'appium:udid': simulator.udid,
-    'appium:platformVersion': simulator.platformVersion,
+    'appium:deviceName': deviceName,
+    ...(udid ? { 'appium:udid': udid } : {}),
+    'appium:platformVersion': platformVersion,
     // fullReset shuts down and erases the simulator. noReset false still removes and reinstalls the app.
     'appium:noReset': false, 'appium:fullReset': false,
     'appium:connectHardwareKeyboard': true,

@@ -21,7 +21,3 @@ export function sauceConnection(env: NodeJS.ProcessEnv = process.env) {
     key: required('SAUCE_ACCESS_KEY', env),
   };
 }
-
-export function sauceUploadUrl(env: NodeJS.ProcessEnv = process.env): string {
-  return `https://api.${sauceRegion(env)}.saucelabs.com/v1/storage/upload`;
-}
