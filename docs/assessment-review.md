@@ -10,7 +10,7 @@ What is still open is execution evidence: a public GitHub repo, one real iOS ses
 | --- | --- | --- |
 | Appium + WebdriverIO + TypeScript against an Android emulator | Covered | `config/wdio.local.ts`, `npm run test:android` |
 | Launch, catalog, product, cart, checkout across multiple screens | Covered | `tests/specs/purchase.spec.ts` through confirmation |
-| At least one mobile-specific interaction | Covered | Bounded scroll in `DeviceHelper.scrollTo`; background and reactivate in `tests/specs/lifecycle.spec.ts` |
+| At least one mobile-specific interaction | Covered | Bounded scroll in `DeviceHelper.scrollTo`; background/reactivate in `tests/specs/lifecycle.spec.ts`. iOS also rotates. Android `MainActivity` is portrait-locked |
 | Same business test for Android and iOS, with one concrete platform abstraction | Covered. Local Simulator command exists; no iOS runtime pass yet | `pair()` in `src/locators/strategies.ts`; `npm run test:ios` |
 | Synchronization without hard-coded sleeps | Covered | `waitForDisplayed`, `waitUntil` on badge, quantity, and subtotal. Mocha retries are 0 |
 | One negative or edge case that needs a real assertion | Covered | Shipping validation in `tests/specs/checkout-validation.spec.ts`; cart quantity/subtotal in `tests/specs/cart.spec.ts` |
@@ -109,7 +109,7 @@ Ordered by how much they change the interview story. None of these are required 
 
 ## Ways to simplify
 
-The brief says this is not a complete framework and asks for about two hours of automation, not environment setup. This repo also has parallel execution, Sauce Labs upload, three GitHub workflows, Allure, an API-setup interface, architecture lint, and a stability runner. The helper unit tests (`tests/unit`, `npm run test:unit`) were removed for that reason. `npm run check` no longer runs them. ESLint still blocks `browser`, `$`, and locator imports inside `tests/specs`.
+The brief says this is not a complete framework and asks for about two hours of automation, not environment setup. This repo also has parallel execution, Sauce Labs upload, one GitHub workflow, Allure, an API-setup interface, architecture lint, and a stability runner. The helper unit tests (`tests/unit`, `npm run test:unit`) were removed for that reason. `npm run check` no longer runs them. ESLint still blocks `browser`, `$`, and locator imports inside `tests/specs`.
 
 That remaining surface is still more than a walkthrough can cover. Simplify by refusing new layers, not by merging the page objects.
 
@@ -130,4 +130,4 @@ That remaining surface is still more than a walkthrough can cover. Simplify by r
 
 **Walkthrough cut**
 
-Show `purchase.spec.ts`, follow `openCart()` into `navigation.cart`, then show the quantity `waitUntil` in `CartPage.changeQuantity`. Mention scroll and backgrounding as the mobile interactions. Mention Sauce Labs and CI as prepared and not yet executed, unless a run has been recorded by then.
+Show `purchase.spec.ts`, follow `openCart()` into `navigation.cart`, then show the quantity `waitUntil` in `CartPage.changeQuantity`. Mention scroll, backgrounding, and orientation as the mobile interactions. Mention Sauce Labs and CI as prepared and not yet executed, unless a run has been recorded by then.

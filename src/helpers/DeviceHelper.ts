@@ -17,10 +17,31 @@ export class DeviceHelper {
           direction, percent: 0.7,
         });
       } else {
-        await browser.execute('mobile: swipe', { direction: direction === 'down' ? 'up' : 'down' });
+        // Use native scrollToElement when the element exists in the tree but is off-screen.
+        // This handles landscape where the cart table is shorter than the cell content.
+        try {
+          await browser.execute('mobile: scrollToElement', { elementId: element.elementId });
+        } catch {
+          // Fall back to a page scroll on the screen.
+          await browser.execute('mobile: scroll', { direction, distance: 0.5 });
+        }
       }
     }
     throw new Error(`Control not visible after ${maxSwipes} swipes: ${selector}`);
+  }
+
+  static async setOrientation(orientation: 'PORTRAIT' | 'LANDSCAPE'): Promise<void> {
+    // MainActivity declares android:screenOrientation="portrait", so ROTATION_270 is rejected.
+    if (browser.isAndroid) {
+      const current = await browser.getOrientation();
+      if (current !== 'PORTRAIT') throw new Error(`Android demo app should stay portrait, but was ${current}`);
+      return;
+    }
+    if ((await browser.getOrientation()) === orientation) return;
+    await browser.setOrientation(orientation);
+    await browser.waitUntil(async () => (await browser.getOrientation()) === orientation, {
+      timeout: 10_000, timeoutMsg: `Device did not rotate to ${orientation}`,
+    });
   }
 
   static async backgroundAndReactivate(): Promise<void> {

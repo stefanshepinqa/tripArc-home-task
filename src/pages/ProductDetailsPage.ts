@@ -9,13 +9,19 @@ const product = {
 
 export class ProductDetailsPage extends BasePage {
   async waitUntilReady(): Promise<void> { await this.visible(product.ready); }
-  async addToCart(): Promise<void> {
+
+  /**
+   * Taps "Add to Cart" and waits for the badge to reach {@link expectedBadge}.
+   * Waiting for the exact count (not just > 0) prevents a stale-read when the
+   * same product is added multiple times in quick succession — the badge
+   * animation is async and a presence-only check would pass with the old value.
+   */
+  async addToCart(expectedBadge = 1): Promise<void> {
     await this.waitUntilReady();
     await this.click(product.add, true);
-    // XCUITest reports this tab-bar count as visible="false" even when its label is on screen.
     await browser.waitUntil(async () => {
       const count = Number(await browser.$(this.selector(navigation.badge)).getText());
-      return Number.isInteger(count) && count > 0;
-    }, { timeout: 15_000, timeoutMsg: 'Cart badge did not update after adding product' });
+      return count === expectedBadge;
+    }, { timeout: 15_000, timeoutMsg: `Cart badge did not reach ${expectedBadge}` });
   }
 }
