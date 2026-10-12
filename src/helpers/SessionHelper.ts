@@ -4,6 +4,7 @@ import { browser } from '@wdio/globals';
 import { CatalogPage } from '../pages/CatalogPage.js';
 import { ArtifactHelper } from './ArtifactHelper.js';
 import { ApiSetupHelper } from './ApiSetupHelper.js';
+import { DeviceHelper } from './DeviceHelper.js';
 
 export class SessionHelper {
   private static api = new ApiSetupHelper();
@@ -25,9 +26,15 @@ export class SessionHelper {
     return this.jobName({ parent: quoted('describe'), title });
   }
 
+  private static async restorePortrait(): Promise<void> {
+    try { await DeviceHelper.setOrientation('PORTRAIT'); }
+    catch (error) { console.warn('Could not restore portrait orientation:', error); }
+  }
+
   static async beforeScenario(name: string): Promise<void> {
     // Exactly one scenario per spec: WDIO creates a fresh session per spec.
     await browser.setTimeout({ implicit: 0 });
+    await this.restorePortrait();
     if (process.env.EXECUTION_TARGET === 'saucelabs') {
       // The session starts before Mocha has a title, so rename it here.
       try { await browser.execute(`sauce:job-name=${name}`); }
@@ -42,6 +49,7 @@ export class SessionHelper {
       try { await ArtifactHelper.capture(name); }
       catch (error) { console.warn('Failure artifacts unavailable:', error); }
     }
+    await this.restorePortrait();
     await this.api.cleanup();
     if (process.env.EXECUTION_TARGET === 'saucelabs') {
       // Metadata failure must not replace the business test outcome.

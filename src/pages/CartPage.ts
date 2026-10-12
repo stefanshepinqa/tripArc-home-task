@@ -22,11 +22,15 @@ export class CartPage extends BasePage {
   async waitUntilReady(): Promise<void> { await this.visible(cart.ready); }
   async readItem(): Promise<CartSnapshot> {
     await this.waitUntilReady();
-    return {
-      name: await this.text(cart.name), quantity: Number(await this.text(cart.quantity)),
-      unitPriceCents: MoneyHelper.toCents(await this.text(cart.price)),
-      subtotalCents: MoneyHelper.toCents(await this.text(cart.subtotal)),
-    };
+    const name = await this.text(cart.name);
+    const unitPriceCents = MoneyHelper.toCents(await this.text(cart.price));
+    const subtotalCents = MoneyHelper.toCents(await this.text(cart.subtotal));
+    // On iOS in landscape the cart table viewport is shorter than its cell,
+    // so the quantity label reports visible="false" even though getText() works
+    // (same pattern as the tab-bar badge). Read it directly instead of scrolling.
+    const qty = await browser.$(this.selector(cart.quantity)).getElement();
+    const quantity = Number(await qty.getText());
+    return { name, quantity, unitPriceCents, subtotalCents };
   }
   async changeQuantity(target: number): Promise<void> {
     if (!Number.isInteger(target) || target < 1 || target > 10) throw new Error('Quantity must be 1–10');

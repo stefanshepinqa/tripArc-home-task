@@ -66,7 +66,7 @@ Each spec contains **one independent scenario**. WDIO creates a new session per 
 | Purchase | Exact product, quantity, unit price, subtotal, review total including $5.99 delivery, completion |
 | Cart quantity | 1 → 2 → 1, exact subtotal updates, unchanged product identity and unit price |
 | Shipping validation | Specific missing-name feedback, no navigation on invalid input, successful recovery to payment |
-| Lifecycle | Expected cart values before and after background/reactivation |
+| Lifecycle | Expected cart values after background/reactivation. iOS also rotates landscape and back to portrait. Android MainActivity is portrait-locked, so the test confirms that lock |
 
 Money is compared in integer cents. Fixed expectations come from the pinned app's product data, rather than copying displayed values and using them as the only oracle. Demo payment data is synthetic; these apps do not process real purchases.
 
@@ -115,7 +115,7 @@ Failures capture screenshots, XML page source, session metadata, and device logs
 
 The opt-in intentional-failure diagnostic writes to `artifacts/diagnostics/`, keeping its expected failure out of normal suite reports. `ARTIFACTS_DIR` can isolate output for other runs.
 
-GitHub Actions includes static checks, Sauce Labs Android and iOS cloud jobs on push and pull request, and a manually triggered job for a chosen device. Add `SAUCE_USERNAME` and `SAUCE_ACCESS_KEY` repository secrets. Default devices are Samsung Galaxy A23 5G (OS 13) and iPhone 13 Pro (OS 18) in `us-west-1`; override with `SAUCE_ANDROID_DEVICE`, `SAUCE_ANDROID_OS`, `SAUCE_IOS_DEVICE`, `SAUCE_IOS_OS`, or `SAUCE_REGION` repository variables. CI uploads artifacts on failure as well as success; it does not publish a site or reports publicly.
+GitHub Actions includes static checks and Sauce Labs Android and iOS jobs on push and pull request (`.github/workflows/cicd.yml`). Add `SAUCE_USERNAME` and `SAUCE_ACCESS_KEY` repository secrets. Default devices are Samsung Galaxy A23 5G (OS 13) and iPhone 13 Pro (OS 18) in `us-west-1`; override with `SAUCE_ANDROID_DEVICE`, `SAUCE_ANDROID_OS`, `SAUCE_IOS_DEVICE`, `SAUCE_IOS_OS`, or `SAUCE_REGION` repository variables. CI uploads artifacts on failure as well as success; it does not publish a site or reports publicly.
 
 ## API setup extension
 
