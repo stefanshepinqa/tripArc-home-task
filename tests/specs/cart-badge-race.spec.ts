@@ -1,5 +1,4 @@
 import { expect } from '@wdio/globals';
-import AllureReporter from '@wdio/allure-reporter';
 import { CatalogPage, ProductDetailsPage, CartPage } from '../../src/pages/index.js';
 import { FixtureHelper } from '../../src/helpers/FixtureHelper.js';
 
@@ -28,13 +27,6 @@ import { FixtureHelper } from '../../src/helpers/FixtureHelper.js';
  */
 describe('Cart badge race condition', () => {
   it('tapping Add to Cart twice should not increase quantity beyond 1 [BUG]', async () => {
-    AllureReporter.addSeverity('critical');
-    AllureReporter.addIssue('ADD_TO_CART_INCREMENTS_ON_REPEAT_TAP');
-    AllureReporter.addDescription(
-      'Tapping "Add to Cart" a second time on the product details screen increments the cart ' +
-      'count to 2. Expected: the button is idempotent and only adds 1 unit; quantity changes ' +
-      'should only be possible via the +/- controls on the Cart screen.',
-    );
     const product = FixtureHelper.product();
     const details = new ProductDetailsPage();
     const cart = new CartPage();
