@@ -13,8 +13,8 @@ export class ProductDetailsPage extends BasePage {
   /**
    * Taps "Add to Cart" and waits for the badge to reach {@link expectedBadge}.
    * Waiting for the exact count (not just > 0) prevents a stale-read when the
-   * same product is added multiple times in quick succession — the badge
-   * animation is async and a presence-only check would pass with the old value.
+   * same product is added multiple times — the badge animation is async and a
+   * presence-only check would pass with the old value.
    */
   async addToCart(expectedBadge = 1): Promise<void> {
     await this.waitUntilReady();
