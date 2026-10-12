@@ -31,7 +31,7 @@ jobs:
       SAUCE_ANDROID_DEVICE: ${{ vars.SAUCE_ANDROID_DEVICE || 'Samsung Galaxy A23 5G' }}
       SAUCE_ANDROID_OS: ${{ vars.SAUCE_ANDROID_OS || '13' }}
       SAUCE_APPIUM_VERSION: ${{ vars.SAUCE_APPIUM_VERSION || 'appium3-2026-10' }}
-      SAUCE_ANDROID_APP: ${{ secrets.SAUCE_ANDROID_APP }}
+      SAUCE_ANDROID_APP: ${{ vars.SAUCE_ANDROID_APP }}
       BUILD_NAME: triparc-${{ github.run_id }}-android
     steps:
       - uses: actions/checkout@v6
@@ -68,7 +68,7 @@ jobs:
       SAUCE_IOS_DEVICE: ${{ vars.SAUCE_IOS_DEVICE || 'iPhone 13 Pro' }}
       SAUCE_IOS_OS: ${{ vars.SAUCE_IOS_OS || '18' }}
       SAUCE_APPIUM_VERSION: ${{ vars.SAUCE_APPIUM_VERSION || 'appium3-2026-10' }}
-      SAUCE_IOS_APP: ${{ secrets.SAUCE_IOS_APP }}
+      SAUCE_IOS_APP: ${{ vars.SAUCE_IOS_APP }}
       BUILD_NAME: triparc-${{ github.run_id }}-ios
     steps:
       - uses: actions/checkout@v6
