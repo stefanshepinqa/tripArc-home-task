@@ -2,20 +2,32 @@
 
 Appium + WebdriverIO + TypeScript, with a strict Page Object Model for Sauce Labs' **native** Android and iOS My Demo Apps (2.3.0).
 
-**Validation status:** see [execution evidence](docs/validation.md). Implemented configuration is not evidence of a successful device run. Cloud runs require your own Sauce Labs Real Device Cloud account.
-
 ## Quick start
 
-Use Node 24.11.0, Java 17, an Android SDK with API 34, and a booted Android emulator. Full instructions: [setup](docs/setup.md).
+Use Node 24.11.0, Java 17, and either an Android SDK with API 34 or full Xcode for iOS. Full instructions: [setup](docs/setup.md).
+
+### Android
+
+1. Download the [Sauce Labs My Demo App APK v2.3.0](https://github.com/nickmichalak/my-demo-app-android/releases/download/2.3.0/mda-2.3.0-27.apk) and place it in `apps/mda-2.3.0-27.apk`.
 
 ```sh
 npm ci
 cp .env.example .env
-npm run apps:download -- android
-npm run appium:setup
-npm run doctor
+npx appium driver install --source=dev uiautomator2
 npm run check
 npm run test:android
+```
+
+### iOS (macOS only)
+
+1. Download the [Sauce Labs My Demo App iOS Simulator build v2.3.0](https://github.com/nickmichalak/my-demo-app-ios/releases/download/2.3.0/SauceLabs-Demo-App.Simulator.zip), unzip it, and place `My Demo App.app` in `apps/My Demo App.app`.
+
+```sh
+npm ci
+cp .env.example .env
+npx appium driver install --source=dev xcuitest
+npm run check
+npm run test:ios
 ```
 
 Appium is launched and stopped by WDIO. Do not start a second server on port 4723. If using the project-local toolchain prepared on this machine, first run `. scripts/local-env.sh` from the project root.
@@ -28,22 +40,12 @@ Appium is launched and stopped by WDIO. Do not start a second server on port 472
 | `npm run test:parallel` | Partition the four specs across two booted Android emulators |
 | `npm run test:cloud:android` | Same business specs on a Sauce Labs Android device |
 | `npm run test:cloud:ios` | Same business specs on a Sauce Labs iOS device |
-| `npm run verify:stability -- 3` | Consecutive local suite runs; stop on first failure |
-| `npm run verify:artifacts` | Opt-in intentional failure; require nonzero test exit plus screenshot/source |
 | `npm run report` | Generate standalone Allure HTML report; requires Java |
+| `npm run report:open` | Open the generated Allure report in a browser |
 
 Run a single scenario with `npm run test:android -- --spec tests/specs/cart.spec.ts`.
 
-Local iOS uses the same specs. Install full Xcode, then:
-
-```sh
-npm run apps:download -- ios-sim
-npm run appium:setup
-npm run doctor -- --ios
-npm run test:ios
-```
-
-`apps:download -- ios` still fetches the device IPA for Sauce Labs. Simulator sessions use `SauceLabs-Demo-App.Simulator.zip`, extracted to `apps/My Demo App.app`. Set `IOS_DEVICE_NAME` to a simulator from `xcrun simctl list devices available`. The suite reuses that simulator across specs. Do not run `test:ios` and `test:android` at the same time; both use Appium on port 4723.
+Set `IOS_DEVICE_NAME` to a simulator from `xcrun simctl list devices available`. The suite reuses that simulator across specs. Do not run `test:ios` and `test:android` at the same time; both use Appium on port 4723.
 
 ## Test strategy and architecture
 
@@ -51,10 +53,10 @@ npm run test:ios
 tests/specs/       Business steps, fixture selection, and assertions only
 src/pages/        Eight page objects: interactions, readiness, domain values
 src/locators/     Private platform-specific locator maps and strategy resolver
-src/helpers/      Device, fixtures, API setup, session, upload, money, artifacts
+src/helpers/      Device, fixtures, session, money, artifacts
 src/data/         Typed, fixed expected product and checkout fixtures
-config/           Shared WDIO settings, capabilities, pinned app manifest
-scripts/          Setup checks, downloads, uploads, verification commands
+config/           Shared WDIO settings, capabilities, environment
+scripts/          Local environment helpers
 ```
 
 Business specs never call the driver, contain selectors, implement reusable functions, or branch by platform. ESLint enforces these boundaries. Page objects do not conceal business assertions: they expose actions and typed values; specs state the expected outcome. Device gestures and lifecycle handling live in `DeviceHelper`.
@@ -95,17 +97,15 @@ Sauce Labs Real Device Cloud concurrency and the devices in your data center mus
 
 1. Put `SAUCE_USERNAME`, `SAUCE_ACCESS_KEY`, and `SAUCE_REGION` into `.env`. The region is the account data center: `us-west-1`, `us-east-4`, or `eu-central-1`.
 2. Set device display names and OS versions from the account's real-device list. A major version such as `14` also matches incremental versions.
-3. Run the commands below and copy each returned `storage:<id>` into `.env`.
+3. In Sauce Labs, open **App Management**, upload the Android APK and iOS IPA, then copy each file id into `.env` as `SAUCE_ANDROID_APP=storage:<uuid>` and `SAUCE_IOS_APP=storage:<uuid>`.
+4. Run the cloud suites:
 
 ```sh
-npm run apps:download -- all
-npm run cloud:upload -- android
-npm run cloud:upload -- ios
 npm run test:cloud:android
 npm run test:cloud:ios
 ```
 
-The upload helper uses the Sauce Labs File Storage API. It is infrastructure setup, not app business-data setup. Cloud sessions include build metadata and an explicit pass/fail job result. No local Appium server or iOS signing setup is needed for cloud execution; Sauce Labs re-signs the official IPA for the real device. A Linux cloud CI job can run iOS tests because the device and XCUITest server are remote.
+Cloud sessions include build metadata and an explicit pass/fail job result. No local Appium server or iOS signing setup is needed; Sauce Labs re-signs the official IPA for the real device.
 
 ## Parallelism, artifacts, and CI
 
@@ -115,14 +115,10 @@ Failures capture screenshots, XML page source, session metadata, and device logs
 
 The opt-in intentional-failure diagnostic writes to `artifacts/diagnostics/`, keeping its expected failure out of normal suite reports. `ARTIFACTS_DIR` can isolate output for other runs.
 
-GitHub Actions includes static checks and Sauce Labs Android and iOS jobs on push and pull request (`.github/workflows/cicd.yml`). Add `SAUCE_USERNAME` and `SAUCE_ACCESS_KEY` repository secrets. Default devices are Samsung Galaxy A23 5G (OS 13) and iPhone 13 Pro (OS 18) in `us-west-1`; override with `SAUCE_ANDROID_DEVICE`, `SAUCE_ANDROID_OS`, `SAUCE_IOS_DEVICE`, `SAUCE_IOS_OS`, or `SAUCE_REGION` repository variables. CI uploads artifacts on failure as well as success; it does not publish a site or reports publicly.
-
-## API setup extension
-
-`ApiSetupProvider` defines typed setup/cleanup methods. The default returns `status: 'not-configured'` and creates no fixture IDs. `ApiSetupHelper` accepts a future real adapter and passes created fixture IDs to cleanup. Native product/cart/checkout data in the inspected source is local; no business setup API is claimed. If a genuine endpoint is verified later, implement an adapter with authentication, bounded timeouts, unique run data, and cleanup, then inject it into the session helper.
+GitHub Actions includes static checks and Sauce Labs Android and iOS jobs on push and pull request (`.github/workflows/cicd.yml`). Add `SAUCE_USERNAME` and `SAUCE_ACCESS_KEY` repository secrets. Add `SAUCE_ANDROID_APP` and `SAUCE_IOS_APP` repository variables (`storage:<uuid>` from App Management). Default devices are Samsung Galaxy A23 5G (OS 13) and iPhone 13 Pro (OS 18) in `us-west-1`; override with `SAUCE_ANDROID_DEVICE`, `SAUCE_ANDROID_OS`, `SAUCE_IOS_DEVICE`, `SAUCE_IOS_OS`, or `SAUCE_REGION` repository variables. CI uploads artifacts on failure as well as success; it does not publish a site or reports publicly.
 
 ## Submission and walkthrough
 
-Use the [Friday stages](docs/stages.md), [validation record](docs/validation.md), and [decision notes](docs/decisions.md). This follows the requested expanded plan rather than a controlled two-hour exercise. Record actual effort and do not claim timed compliance or unexecuted runs as completed evidence.
+Use the [Friday stages](docs/stages.md) and [decision notes](docs/decisions.md).
 
-Before submission, verify a clean checkout, repeat the suite, check failure diagnostics, and publish a public GitHub repository without `.env`, app binaries, or generated reports. Attach real CI/cloud evidence and a short demonstration. Public repository publication is a separate final step once a destination/account is available.
+Before submission, verify a clean checkout, repeat the suite, check failure diagnostics, and publish a public GitHub repository without `.env`, app binaries, or generated reports. Attach real CI/cloud evidence and a short demonstration.

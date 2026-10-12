@@ -3,11 +3,9 @@ import { fileURLToPath } from 'node:url';
 import { browser } from '@wdio/globals';
 import { CatalogPage } from '../pages/CatalogPage.js';
 import { ArtifactHelper } from './ArtifactHelper.js';
-import { ApiSetupHelper } from './ApiSetupHelper.js';
 import { DeviceHelper } from './DeviceHelper.js';
 
 export class SessionHelper {
-  private static api = new ApiSetupHelper();
 
   static jobName(test: { title: string; parent?: string }): string {
     const title = test.title.trim();
@@ -40,7 +38,6 @@ export class SessionHelper {
       try { await browser.execute(`sauce:job-name=${name}`); }
       catch (error) { console.warn('Could not set cloud job name:', error); }
     }
-    await this.api.setup({ scenario: name, runId: browser.sessionId });
     await new CatalogPage().waitUntilReady();
   }
 
@@ -50,7 +47,6 @@ export class SessionHelper {
       catch (error) { console.warn('Failure artifacts unavailable:', error); }
     }
     await this.restorePortrait();
-    await this.api.cleanup();
     if (process.env.EXECUTION_TARGET === 'saucelabs') {
       // Metadata failure must not replace the business test outcome.
       try {
